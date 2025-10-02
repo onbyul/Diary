@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일기 달력</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f8f8f6;
+            color: #000;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+        }
+
+        .menu {
+            width: 100%;
+            background: #fff;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+
+        .menu-brand {
+            font-weight: 700;
+            font-size: 18px;
+            margin-right: 10px;
+        }
+
+        .menu-divider {
+            color: #ddd;
+        }
+
+        .menu-item {
+            font-size: 15px;
+            color: #666;
+            text-decoration: none;
+            transition: color 0.2s;
+            cursor: pointer;
+        }
+
+        .menu-item:hover {
+            color: #000;
+        }
+
+        .menu-item.active {
+            color: #000;
+            font-weight: 500;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: #fff;
+            padding: 30px 20px;
+            margin: 0 20px 20px 20px;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            transition: opacity 0.2s;
+            color: #000;
+        }
+
+        .nav-btn:hover {
+            opacity: 0.6;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        select {
+            border: 1px solid #ddd;
+            padding: 6px 10px;
+            font-size: 15px;
+            background: #fff;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: border-color 0.2s;
+        }
+
+        select:hover {
+            border-color: #999;
+        }
+
+        .calendar {
+            margin-bottom: 30px;
+        }
+
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-size: 13px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .weekday {
+            padding: 8px 0;
+        }
+
+        .weekday.sun {
+            color: #e74c3c;
+        }
+
+        .weekday.sat {
+            color: #3498db;
+        }
+
+        .days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 15px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .day:hover:not(.empty):not(.other-month) {
+            background: #f5f5f5;
+        }
+
+        .day.empty {
+            cursor: default;
+        }
+
+        .day.other-month {
+            color: #ddd;
+            cursor: default;
+        }
+
+        .day.has-diary {
+            font-weight: 700;
+        }
+
+        .day.no-diary {
+            opacity: 0.3;
+        }
+
+        .day.selected {
+            background: #000;
+            color: #fff;
+        }
+
+        .day.sun:not(.selected) {
+            color: #e74c3c;
+        }
+
+        .day.sat:not(.selected) {
+            color: #3498db;
+        }
+
+        .diary-container {
+            border-top: 1px solid #eee;
+            padding-top: 30px;
+            min-height: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .diary-date {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .diary-content {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #333;
+            white-space: pre-wrap;
+            animation: fadeIn 0.3s;
+        }
+
+        .diary-content.empty {
+            color: #ccc;
+            font-style: italic;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .menu {
+                padding: 15px 10px;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
+            .menu-brand {
+                font-size: 16px;
+                width: 100%;
+                text-align: center;
+                margin-right: 0;
+                margin-bottom: 5px;
+            }
+
+            .container {
+                padding: 20px 15px;
+                margin: 0 10px 10px 10px;
+            }
+
+            .day {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="menu">
+        <div class="menu-brand">ONBYUL</div>
+        <span class="menu-divider">|</span>
+        <a class="menu-item active">일기</a>
+        <a class="menu-item">목표</a>
+        <a class="menu-item">곡들</a>
+        <a class="menu-item">칼럼니스트</a>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <button class="nav-btn" id="prevBtn">←</button>
+            <div class="controls">
+                <select id="yearSelect"></select>
+                <select id="monthSelect"></select>
+            </div>
+            <button class="nav-btn" id="nextBtn">→</button>
+        </div>
+
+        <div class="calendar">
+            <div class="weekdays">
+                <div class="weekday sun">日</div>
+                <div class="weekday">月</div>
+                <div class="weekday">火</div>
+                <div class="weekday">水</div>
+                <div class="weekday">木</div>
+                <div class="weekday">金</div>
+                <div class="weekday sat">土</div>
+            </div>
+            <div class="days" id="days"></div>
+        </div>
+
+        <div class="diary-container">
+            <div class="diary-date" id="diaryDate"></div>
+            <div class="diary-content" id="diaryContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const diaryData = {
+                        '2025-04-02': '제이형한테 여러 얘기를 듣다보니 생각이 많아지는 하루였다. 진지하게 생각이 있으면 레슨을 받는 게 어떻겠냐는 이야기였는데, 솔직히 내 입장에서 레슨은 좀 부담스러워서, 고집처럼 느껴지겠지만 말이다...',
+            '2025-04-07': '시험이 코앞으로 다가오고 있다.\n\n주변에서는 그게 어렵냐며 계속 질책해대니, 더 이상 자신감을 가질 수 없었다. 조금 남탓처럼 보일지도 모르지만 말이다.',
+            '2025-04-10': '생각보다 곡을 만든다는 게 쉽다는 게 아니라는 걸 오늘 깨달았다.\n그냥 우연히 든 생각이지만, 내가 즐거워하는 게 가장 중요하기 때문에, 이 일이 내 적성에 맞는지는 다시 한번 생각해봐야할 거 같다.',
+            '2025-04-15': '엔지니어님한테 따로 내가 작업 중인 곡에 대해 피드백을 받았는데, 곡이 튀는 부분이 없어 너무 지루해보인다는 평가를 받았다.\n\n그게 정말 나쁜 것인지는 잘 모르겠지만, 아무래도 곡을 좀 다듬을 필요가 있어보인다.',
+            '2025-04-16': '오랜만에 네이버 인물정보를 업데이트했다. 새로워진 나의 정보를 보니 생각이 참 많아졌다. 내가 2개월 사이에 이렇게나 변했나 싶어서 이상한 기분이었다. ',
+            '2025-04-18': '지신형이 말했다.\n\n"예체능은 무슨, 공부나 해. 그게 답이야"\n\n참 막막했다. 하고 싶은 말은 참 많았지만 귀찮아질까하여 별말 않고 넘어갔다.\n 내 길을 위해서는 하기 싫은 일도 해야한다는 걸 잘 알고 있다. 다만… 공부와 음악 양쪽에서 회의감을 느끼다보니, 정신을 차린 순간 나는 어느 길을 가야할지 모르는 채 양갈래길에 놓여있었다.',
+            '2025-04-20': '오늘은 기분이 별로였다. 뭐 언제는 좋았냐고 물으면 나는 아니라고 할테지만… 요즘 들어 곡 쓰는 일에 대한 회의감이 든다.',
+            '2025-04-21': '가끔 내게 음악 하는 이유가 돈 때문이냐고 묻는 사람들이 있다.\n솔직히 말하면, 전혀 아니라곤 못 하겠다.\n실제로 이걸로 번 돈도 있으니까.\n하지만 그렇다고 이 일을 하면서 큰 돈이 들어오는 것도 아니다.\n많아봤자 아직은 30만 원 정도고 (작곡 인센티브가 대부분으로 음원 수익은 아니다)\n그마저도 고맙고 벅차서 오래오래 기억에 남는다.\n\n다만, 중요한 건 나는 이 일에 진심이라는 거다.\n어릴 때부터 공부로 성공한 내 모습을 상상해본 적은 거의 없었다. 그래서일까.\n오늘도 나는 내가 하고 싶은 걸 하고 싶다고 생각했다.\n하기 싫은 일을 하면서 떼돈을 벌고 있는 내 모습은\n아무리 상상해도 별로 행복해 보이지 않았다.',
+            '2025-04-22': '학원 선생님께 탈탈 털렸다. 그렇게 혼나가면서 억지로 시험 공부를 하니, 내가 공부를 하는 게 맞는지, 내 스스로에게 다시 되묻게 되었다. 한편으로는 제이형이 지난번에 해준 조언이 떠올라서 좀 복잡한 심경이었다.',
+            '2025-04-23': '나를 불안하게 만드는 요소는 세 가지가 있다. (주로 현실에서의) 인간관계, 공부, 음악. 이 중 솔직히 음악 말고는 지속할 필요가 없다고 느껴지는 요즘이다.\n\n사람들과의 관계는 언제나 어렵다. 한마디 말, 무심코 한 행동이 오해로 이어지고, 그럴 때면 나는 정말 내가 이상한 사람이 된 기분이 든다. ‘내가 너무 예민한 걸까? 아니면 진짜 뭔가 잘못된 걸까?’라는 생각이 머릿속을 빙빙 돈다. 애초에 누군가와 깊이 엮이는 일이 내겐 늘 버거웠다. 그래서 어느 순간 남들이 친해지려고 다가 올 때면 마음은 받아들이고 싶어도 몸은 점점 밀어내고 있었다.\n\n공부는 그냥… 계속 나를 누르는 벽 같다. 왜 해야 하는지도 잘 모르겠고, 해봤자 내 길과 크게 맞닿아 있는지도 모르겠다. 다들 당연하다는 듯이 "해야지"라고 말하지만, 그게 당최 왜 당연한 건지 나는 여전히 납득이 안 된다. 그저 또 하나의 의무, 또 하나의 부담일 뿐이다.\n\n그런데 음악은… 다르다. 음악은 이상하게도 이런 무기력 속에서도 계속 손이 가는 유일한 무언가다. 때로는 쓰는 것조차 고통스럽고, 결과물에 만족하지 못할 때면 스스로를 미워하게 되지만 그래도 포기하고 싶지는 않다. 어쩌면 그게 내가 살아 있는 이유인지도 모르겠다. 이 세계에 나라는 사람이 존재한다는 걸 확인할 수 있는 방법이 음악밖에 없으니까.',
+            //5월
+            '2025-05-10': '오늘 날짜 기분 좋다. 내 생일이니까... 샤브올데이 맛있었다.",
+            //6월
+            "2025-06-17": "병신들… 내가 뭘 하든 말든 지들이 알게 뭐야?",
+            "2025-06-18": "날 정말 사랑했다면 안 그랬겠지.\n근데 왜 자꾸 눈물이 날까?",
+            //7월
+            "2025-07-07": "갑작스러운 소식이지만 연애를 시작해버렸다. 그것도 한살 연하랑. 오해하지마라. 걔가 먼저 고백했으니까...",
+            "2025-07-08": "결국 첫 연애는 하루만에 끝나버렸다. 디데이까지 맞춘 내가 무색하게. .. 의외라면 내가 먼저 그 아이보고 친구로 지내자고 한 거.",
+            "2025-07-09": "나에겐 도대체 왜 이런 거지같은 일들만 생기는 걸까? 어떤 놈이 날 조종하고 있다면 분명 나보고 죽길 바라는 거겠지... <by>스레드에서 만난 친한 형이 별 시덥지도 않은 걸로 나락을 갔다. 그 형이 잘못을 안했단 건 아니지만 그저 장난으로 끝났고 피해자라던 양반이 기분 나빠한다니 할 수 없었다.<by>결국 당사자랑 합의도 됐지만 아무리 나보다 어른이라도 그 형한테는 이런 맹목적인 비난이 정신적으로 힘들었던 것인지 생이별을 당해버렸다. 스친이라는 걸 원래 스쳐가는 친구로 생각해야 건강에 좋겠지만 그게 안되니 더욱 슬프다.",
+            "2025-07-10": "매일 일기를 쓰기는 처음이군. 기분도 풀겸 CD카세트를 찾아 부산 대장정... 은 아니고 당근 거래를 했다. 만원에 주워왔다고! 럭키했다.<by> 최근 들어 불행한 일만 생긴다. 택배 시켰는데 맘대로 재고없다고 주문 취소하고 환불했다. 기분 더럽다. 으... 알라딘 청주점은 안가야지.",
+            "2025-07-11": "자기가 가장 소중한 것도 모르는 바보... 잘 가. 다시 만나.",
+            "2025-07-16": "기분이 최악이다. 내가 아끼던 사람이 내가 생각한 것보다 더 최악의 일을 했는데 그걸 나만 모르고 상대가 피해자 코스프레하는 걸 하나하나 다 받아줬다. 난 등신이었나보다.",
+  
+};
+
+        const today = new Date();
+        let currentYear = today.getFullYear();
+        let currentMonth = today.getMonth() + 1;
+        let selectedDate = null;
+        let history = [];
+
+        function init() {
+            populateSelects();
+            renderCalendar();
+            setupEventListeners();
+        }
+
+        function populateSelects() {
+            const yearSelect = document.getElementById('yearSelect');
+            const monthSelect = document.getElementById('monthSelect');
+
+            for (let y = 2020; y <= 2030; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y + '년';
+                yearSelect.appendChild(opt);
+            }
+
+            for (let m = 1; m <= 12; m++) {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = m + '월';
+                monthSelect.appendChild(opt);
+            }
+
+            yearSelect.value = currentYear;
+            monthSelect.value = currentMonth;
+        }
+
+        function renderCalendar() {
+            const daysContainer = document.getElementById('days');
+            daysContainer.innerHTML = '';
+
+            const firstDay = new Date(currentYear, currentMonth - 1, 1);
+            const lastDay = new Date(currentYear, currentMonth, 0);
+            const prevLastDay = new Date(currentYear, currentMonth - 1, 0);
+            
+            const firstDayOfWeek = firstDay.getDay();
+            const lastDate = lastDay.getDate();
+            const prevLastDate = prevLastDay.getDate();
+
+            for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+                const day = document.createElement('div');
+                day.className = 'day other-month';
+                day.textContent = prevLastDate - i;
+                daysContainer.appendChild(day);
+            }
+
+            for (let date = 1; date <= lastDate; date++) {
+                const day = document.createElement('div');
+                const dateKey = formatDateKey(currentYear, currentMonth, date);
+                const dayOfWeek = new Date(currentYear, currentMonth - 1, date).getDay();
+                
+                day.className = 'day';
+                if (dayOfWeek === 0) day.classList.add('sun');
+                if (dayOfWeek === 6) day.classList.add('sat');
+                
+                if (diaryData[dateKey]) {
+                    day.classList.add('has-diary');
+                } else {
+                    day.classList.add('no-diary');
+                }
+
+                day.textContent = date;
+                day.onclick = () => selectDate(currentYear, currentMonth, date);
+                daysContainer.appendChild(day);
+            }
+
+            const remainingDays = 42 - daysContainer.children.length;
+            for (let i = 1; i <= remainingDays; i++) {
+                const day = document.createElement('div');
+                day.className = 'day other-month';
+                day.textContent = i;
+                daysContainer.appendChild(day);
+            }
+        }
+
+        function formatDateKey(y, m, d) {
+            return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        }
+
+        function selectDate(y, m, d) {
+            history.push({ year: currentYear, month: currentMonth, date: selectedDate });
+            
+            selectedDate = d;
+            const dateKey = formatDateKey(y, m, d);
+            
+            document.querySelectorAll('.day').forEach(day => {
+                day.classList.remove('selected');
+            });
+
+            event.target.classList.add('selected');
+
+            const diaryDateEl = document.getElementById('diaryDate');
+            const diaryContentEl = document.getElementById('diaryContent');
+
+            diaryDateEl.textContent = dateKey;
+
+            if (diaryData[dateKey]) {
+                let content = diaryData[dateKey];
+                content = content.replace(/<br>/g, '\n');
+                content = content.replace(/\\n/g, '\n');
+                content = content.replace(/<by>/g, '\n\n');
+                content = content.replace(/<b>(.*?)<\/b>/g, '<strong>$1</strong>');
+                content = content.replace(/<s>(.*?)<\/s>/g, '<small style="font-size:0.85em;">$1</small>');
+                
+                diaryContentEl.innerHTML = content;
+                diaryContentEl.classList.remove('empty');
+            } else {
+                diaryContentEl.textContent = '일기가 없습니다.';
+                diaryContentEl.classList.add('empty');
+            }
+        }
+
+        function changeMonth(delta) {
+            history.push({ year: currentYear, month: currentMonth, date: selectedDate });
+            
+            currentMonth += delta;
+            if (currentMonth > 12) {
+                currentMonth = 1;
+                currentYear++;
+            } else if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear--;
+            }
+
+            document.getElementById('yearSelect').value = currentYear;
+            document.getElementById('monthSelect').value = currentMonth;
+            renderCalendar();
+            clearDiary();
+        }
+
+        function clearDiary() {
+            selectedDate = null;
+            document.getElementById('diaryDate').textContent = '';
+            document.getElementById('diaryContent').textContent = '';
+        }
+
+        function goBack() {
+            if (history.length === 0) return;
+            
+            const prev = history.pop();
+            currentYear = prev.year;
+            currentMonth = prev.month;
+            
+            document.getElementById('yearSelect').value = currentYear;
+            document.getElementById('monthSelect').value = currentMonth;
+            renderCalendar();
+            
+            if (prev.date) {
+                const days = document.querySelectorAll('.day:not(.other-month)');
+                days.forEach(day => {
+                    if (parseInt(day.textContent) === prev.date) {
+                        day.click();
+                    }
+                });
+            } else {
+                clearDiary();
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('prevBtn').onclick = () => changeMonth(-1);
+            document.getElementById('nextBtn').onclick = () => changeMonth(1);
+
+            document.getElementById('yearSelect').onchange = (e) => {
+                history.push({ year: currentYear, month: currentMonth, date: selectedDate });
+                currentYear = parseInt(e.target.value);
+                renderCalendar();
+                clearDiary();
+            };
+
+            document.getElementById('monthSelect').onchange = (e) => {
+                history.push({ year: currentYear, month: currentMonth, date: selectedDate });
+                currentMonth = parseInt(e.target.value);
+                renderCalendar();
+                clearDiary();
+            };
+
+            window.addEventListener('popstate', goBack);
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && e.target.tagName !== 'SELECT') {
+                    e.preventDefault();
+                    goBack();
+                }
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
